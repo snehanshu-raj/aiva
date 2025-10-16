@@ -1,0 +1,227 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.App-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.error-banner {
+  background-color: #fee;
+  border: 2px solid #c33;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-size: 1.3rem;
+}
+
+.status-indicator {
+  font-size: 1.8rem;
+}
+
+.status-indicator.active {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-weight: 600;
+  color: #333;
+}
+
+.video-container {
+  background: black;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  max-height: 600px;
+}
+
+.video-preview {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.controls {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.controls button {
+  padding: 1.5rem 3rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 220px;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
+}
+
+.stop-btn {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  color: white;
+}
+
+.stop-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(235, 51, 73, 0.4);
+}
+
+.camera-switch-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.camera-switch-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
+}
+
+.controls button:active {
+  transform: translateY(0);
+}
+
+.controls button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.App-footer {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  margin-top: auto;
+}
+
+.App-footer p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .App-header h1 {
+    font-size: 2rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .controls button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .status-bar {
+    font-size: 1.1rem;
+  }
+  
+  .video-container {
+    max-height: 400px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .App-header {
+    background: #000;
+    border-bottom: 3px solid #fff;
+  }
+  
+  button {
+    border: 2px solid currentColor;
+  }
+}
+
+button:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+}
