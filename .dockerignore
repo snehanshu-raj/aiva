@@ -1,0 +1,12 @@
+node_modules
+__pycache__
+*.pyc
+.git
+.env
+.DS_Store
+*.md
+frontend/build
+frontend/node_modules
+backend/captures
+.vscode
+.idea

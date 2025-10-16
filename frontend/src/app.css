@@ -5,203 +5,242 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
 .App {
+  max-width: 600px;
+  margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: 20px;
 }
 
+/* Header */
 .App-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  color: white;
 }
 
 .App-header h1 {
   font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
 .subtitle {
   font-size: 1.1rem;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
-.main-content {
-  flex: 1;
-  max-width: 1000px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
+/* Error Banner */
 .error-banner {
-  background-color: #fee;
-  border: 2px solid #c33;
-  color: #c33;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  background: #ff4444;
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-weight: 500;
 }
 
+/* Status Bar */
 .status-bar {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  font-size: 1.3rem;
+  gap: 12px;
+  color: white;
 }
 
 .status-indicator {
-  font-size: 1.8rem;
-}
-
-.status-indicator.active {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  font-size: 1.2rem;
 }
 
 .status-text {
-  font-weight: 600;
-  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
+/* Video Container */
 .video-container {
-  background: black;
-  border-radius: 16px;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #000;
+  border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 2rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  max-height: 600px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
 }
 
 .video-preview {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
+/* Controls */
 .controls {
   display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
-.controls button {
-  padding: 1.5rem 3rem;
-  font-size: 1.4rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  min-width: 220px;
-}
-
-.start-btn {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
-}
-
-.start-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
-}
-
-.stop-btn {
-  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-  color: white;
-}
-
-.stop-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(235, 51, 73, 0.4);
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .camera-switch-btn {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 55px;
 }
 
-.camera-switch-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
+.camera-switch-btn:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.controls button:active {
-  transform: translateY(0);
+.start-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  min-height: 65px;
 }
 
-.controls button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.start-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
+.stop-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  min-height: 65px;
+}
+
+.stop-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Footer */
 .App-footer {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  color: white;
-  text-align: center;
-  padding: 2rem;
   margin-top: auto;
+  text-align: center;
+  color: white;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .App-footer p {
-  font-size: 1.1rem;
-  opacity: 0.9;
+  margin: 0;
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .App {
+    padding: 30px;
+  }
+
+  .App-header h1 {
+    font-size: 3rem;
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+  }
+
+  .start-btn,
+  .stop-btn {
+    font-size: 1.4rem;
+    padding: 22px;
+  }
+}
+
+@media (max-width: 375px) {
+  .App {
+    padding: 15px;
+  }
+
   .App-header h1 {
     font-size: 2rem;
   }
-  
-  .main-content {
-    padding: 1rem;
+
+  .subtitle {
+    font-size: 0.95rem;
   }
-  
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .controls button {
-    width: 100%;
-    min-width: auto;
-  }
-  
+
   .status-bar {
-    font-size: 1.1rem;
+    padding: 12px 16px;
   }
-  
-  .video-container {
-    max-height: 400px;
+
+  .status-text {
+    font-size: 0.9rem;
+  }
+
+  .camera-switch-btn {
+    font-size: 1rem;
+    padding: 12px 16px;
+  }
+
+  .start-btn,
+  .stop-btn {
+    font-size: 1.1rem;
+    padding: 18px;
+  }
+
+  .App-footer {
+    font-size: 0.85rem;
+    padding: 15px;
   }
 }
 
-/* Accessibility improvements */
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -211,17 +250,9 @@ body {
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .App-header {
-    background: #000;
-    border-bottom: 3px solid #fff;
+  .status-bar,
+  .camera-switch-btn,
+  .App-footer {
+    border: 2px solid white;
   }
-  
-  button {
-    border: 2px solid currentColor;
-  }
-}
-
-button:focus-visible {
-  outline: 3px solid #667eea;
-  outline-offset: 2px;
 }

@@ -1,5 +1,8 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.0
-websockets==12.0
-google-genai==0.3.0
-python-multipart==0.0.9
+fastapi
+uvicorn[standard]
+websockets
+google-genai
+python-multipart
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
