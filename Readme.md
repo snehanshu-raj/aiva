@@ -44,6 +44,33 @@ An AI-powered visual assistance platform that empowers everyone through real-tim
 
 ---
 
+## 🎯 Social Impact & Hackathon Vision
+
+AIVA was created to address the **Accessibility** theme of the USC Viterbi AI/ML for Social Good Hackathon. My mission is to leverage modern AI to empower the visually impaired community and demonstrate that inclusive, ethical technology can be accessible to everyone.
+
+### Why This Matters
+
+According to the World Health Organization, over 2.2 billion people worldwide have vision impairment. Many existing assistive technologies are expensive, require specialized training, or aren't available in all languages. **AIVA changes this.**
+
+### Impact on Visually Challenged Individuals
+
+This app is **transformative** for people with visual impairments because it:
+
+- **Requires zero training** - just speak naturally
+- **Works on any smartphone** - no expensive hardware needed
+- **Provides instant scene understanding** - know what's around you
+- **Reads text aloud** - access printed information independently
+- **Captures and emails information** - save important details for later
+- **Offers real-time assistance** - get help navigating unfamiliar spaces/objects/machines...etc
+
+### Universal Design for All
+
+While designed with visual impairment in mind, AIVA Companion serves everyone:
+- Elderly users who need reading assistance
+- Students documenting lectures or whiteboards
+- Travelers navigating foreign languages
+- Anyone needing hands-free visual assistance
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -64,51 +91,16 @@ An AI-powered visual assistance platform that empowers everyone through real-tim
 git clone https://github.com/snehanshu-raj/aiva.git
 cd aiva
 
-# Create .env file
-
-cat > backend/.env << EOF
-GOOGLE_API_KEY=your-gemini-api-key
-DEFAULT_EMAIL=your-email@gmail.com
-SENDER_EMAIL=your-email@gmail.com
-EOF
+# for email functionality (optional)
+cd backend
+- Activate GMAIL API for your account, read up the docs and add your credentials.json and token.json files in here
 
 # Build and run
 
-docker build -t vision-ai-companion .
-docker run -p 8080:8080 --env-file backend/.env vision-ai-companion
+docker build -t aiva .
+docker run -p 8080:8080 -e GOOGLE_API_KEY=<your_api_key_here> aiva
 
 ```
-
-#### Option 2: Manual Setup
-
-```
-
-
-# Clone repository
-
-git clone https://github.com/yourusername/vision-ai-companion.git
-cd vision-ai-companion
-
-# Backend setup
-
-cd backend
-pip install -r requirements.txt
-export GOOGLE_API_KEY="your-api-key"
-export DEFAULT_EMAIL="your-email@gmail.com"
-python main.py \&
-
-# Frontend setup (new terminal)
-
-cd frontend
-npm install
-npm start
-
-```
-
-### Access the App
-
-- **Local**: http://localhost:8080
-- **Mobile**: http://your-computer-ip:8080
 
 ---
 

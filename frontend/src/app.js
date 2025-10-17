@@ -281,6 +281,10 @@ function App() {
           />
           <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
+        
+        <footer className="App-footer">
+            <p> Speak naturally - the assistant will describe what it sees and answer your questions!</p>
+        </footer>
 
         <div className="controls">
           <button
@@ -288,7 +292,7 @@ function App() {
             onClick={switchCamera}
             aria-label={`Switch to ${cameraMode === 'user' ? 'rear' : 'front'} camera`}
           >
-            📷 {cameraMode === 'user' ? 'Front Camera' : 'Rear Camera'}
+          {cameraMode === 'user' ? 'Front Camera Active' : 'Rear Camera Active'}
           </button>
 
           {!isActive ? (
@@ -310,10 +314,6 @@ function App() {
           )}
         </div>
       </main>
-
-      <footer className="App-footer">
-        <p> Speak naturally - the assistant will describe what it sees and answer your questions!</p>
-      </footer>
     </div>
   );
 }

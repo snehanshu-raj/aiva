@@ -22,7 +22,7 @@ body {
   background: #000;
 }
 
-/* Header - Sticky at Top */
+/* Header */
 .App-header {
   position: sticky;
   top: 0;
@@ -31,7 +31,7 @@ body {
   z-index: 10;
   text-align: center;
   padding: 15px 20px;
-  background: rgba(0,0,0,0.95);
+  background: rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(10px);
   color: white;
 }
@@ -63,17 +63,24 @@ body {
   margin: 10px 20px;
 }
 
-/* Status Bar - Hidden */
+/* Status Bar */
 .status-bar {
   display: none;
 }
 
-/* Video Container - Takes natural space */
+.status-indicator {
+  font-size: 1rem;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Video Container */
 .video-container {
   position: relative;
   width: 100%;
-  min-height: 50vh;
-  max-height: 70vh;
   background: #000;
   overflow: hidden;
 }
@@ -85,7 +92,7 @@ body {
   display: block;
 }
 
-/* Main Content - Scrollable */
+/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -93,14 +100,32 @@ body {
   position: relative;
 }
 
-/* Controls - Below Video in Natural Flow */
+/* Footer */
+.App-footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  color: white;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.App-footer p {
+  margin: 0;
+}
+
+/* Controls */
 .controls {
   position: relative;
   z-index: 15;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px;
+  padding: 15px 20px;
   background: rgba(0, 0, 0, 0.9);
 }
 
@@ -165,22 +190,21 @@ body {
   box-shadow: 0 5px 15px rgba(238, 9, 121, 0.4);
 }
 
-/* Footer - Below Controls */
-.App-footer {
-  position: relative;
-  z-index: 10;
-  text-align: center;
-  color: white;
-  padding: 15px 20px;
-  padding-bottom: 30px;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.App-footer p {
-  margin: 0;
+/* Mobile - Small video before starting */
+@media (max-width: 767px) {
+  .video-container {
+    min-height: 30vh;
+    max-height: 40vh;
+  }
+  
+  .App-footer {
+    padding: 8px 15px;
+    font-size: 0.8rem;
+  }
+  
+  .controls {
+    padding: 12px 15px;
+  }
 }
 
 /* Small Phones */
@@ -193,16 +217,6 @@ body {
     font-size: 0.75rem;
   }
   
-  .video-container {
-    min-height: 40vh;
-    max-height: 60vh;
-  }
-  
-  .controls {
-    padding: 15px;
-    gap: 10px;
-  }
-  
   .camera-switch-btn {
     font-size: 0.95rem;
     padding: 14px 16px;
@@ -213,10 +227,34 @@ body {
     font-size: 1.15rem;
     padding: 18px;
   }
+}
+
+/* Tablet/Laptop - Full screen video */
+@media (min-width: 768px) {
+  .App-header h1 {
+    font-size: 2rem;
+  }
   
-  .App-footer {
-    font-size: 0.8rem;
-    padding: 12px 15px 25px;
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .video-container {
+    min-height: 75vh;
+    max-height: 85vh;
+  }
+  
+  .controls {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+/* Desktop - Nearly full screen */
+@media (min-width: 1024px) {
+  .video-container {
+    min-height: 80vh;
+    max-height: 90vh;
   }
 }
 
@@ -235,13 +273,13 @@ body {
   }
   
   .video-container {
-    min-height: 40vh;
-    max-height: 50vh;
+    min-height: 50vh;
+    max-height: 60vh;
   }
   
   .controls {
     flex-direction: row;
-    padding: 15px;
+    padding: 12px 15px;
   }
   
   .camera-switch-btn,
@@ -253,29 +291,8 @@ body {
   }
   
   .App-footer {
-    padding: 10px 15px 20px;
+    padding: 8px 15px;
     font-size: 0.75rem;
-  }
-}
-
-/* Desktop / Tablet */
-@media (min-width: 768px) {
-  .App {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .App-header h1 {
-    font-size: 2rem;
-  }
-  
-  .subtitle {
-    font-size: 1rem;
-  }
-  
-  .video-container {
-    min-height: 60vh;
-    max-height: 70vh;
   }
 }
 
@@ -293,7 +310,7 @@ body {
     padding-top: max(15px, env(safe-area-inset-top));
   }
   
-  .App-footer {
-    padding-bottom: max(30px, calc(env(safe-area-inset-bottom) + 15px));
+  .controls {
+    padding-bottom: max(15px, calc(env(safe-area-inset-bottom) + 10px));
   }
 }
