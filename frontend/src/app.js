@@ -253,14 +253,9 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>👁️ AIVA</h1>
+        <h1>AIVA</h1>
         <p className="subtitle">Real-time AI Visual Assistant</p>
       </header>
-
-    <div className={`connection-status ${isActive ? 'connected' : 'disconnected'}`}>
-        <span className="status-dot"></span>
-        <span className="status-label">{isActive ? 'Connected' : 'Disconnected'}</span>
-    </div>
 
       <main className="main-content">
         {error && (
@@ -302,7 +297,7 @@ function App() {
               onClick={startAssistant}
               aria-label="Start vision assistant"
             >
-              ▶️ Start Assistant
+              Wake AIVA
             </button>
           ) : (
             <button
@@ -317,7 +312,7 @@ function App() {
       </main>
 
       <footer className="App-footer">
-        <p>🎤 Speak naturally - the assistant will describe what it sees and answer your questions</p>
+        <p> Speak naturally - the assistant will describe what it sees and answer your questions!</p>
       </footer>
     </div>
   );

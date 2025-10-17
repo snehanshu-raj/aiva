@@ -9,28 +9,30 @@ body {
   -webkit-font-smoothing: antialiased;
   background: #000;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .App {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
   background: #000;
 }
 
-/* Header - Compact at top */
+/* Header - Sticky at Top */
 .App-header {
-  position: absolute;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
   z-index: 10;
   text-align: center;
   padding: 15px 20px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(10px);
   color: white;
 }
 
@@ -45,104 +47,12 @@ body {
   opacity: 0.9;
 }
 
-/* Connection Status - Top Left */
-.connection-status {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.connection-status.connected {
-  background: rgba(17, 153, 142, 0.9);
-  color: white;
-  border: 2px solid rgba(56, 239, 125, 0.5);
-}
-
-.connection-status.disconnected {
-  background: rgba(100, 100, 100, 0.9);
-  color: white;
-  border: 2px solid rgba(150, 150, 150, 0.5);
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-.connection-status.connected .status-dot {
-  background: #38ef7d;
-  box-shadow: 0 0 10px rgba(56, 239, 125, 0.8);
-}
-
-.connection-status.disconnected .status-dot {
-  background: #666;
-  animation: none;
-}
-
-.status-label {
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-}
-
-/* Pulse animation for connected state */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-}
-
-/* Mobile adjustments */
-@media (max-width: 375px) {
-  .connection-status {
-    top: 15px;
-    left: 15px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-  }
-  
-  .status-dot {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .status-label {
-    font-size: 0.7rem;
-  }
-}
-
-/* Landscape mode */
-@media (orientation: landscape) {
-  .connection-status {
-    top: 10px;
-    left: 10px;
-    padding: 6px 14px;
-  }
-}
-
 /* Error Banner */
 .error-banner {
-  position: absolute;
+  position: sticky;
   top: 80px;
-  left: 10px;
-  right: 10px;
+  left: 20px;
+  right: 20px;
   z-index: 20;
   background: #ff4444;
   color: white;
@@ -150,31 +60,20 @@ body {
   border-radius: 10px;
   font-weight: 500;
   font-size: 0.9rem;
+  margin: 10px 20px;
 }
 
-/* Status Bar - Floating top */
+/* Status Bar - Hidden */
 .status-bar {
-  
   display: none;
-  
 }
 
-.status-indicator {
-  font-size: 1rem;
-}
-
-.status-text {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Video Container - FULL SCREEN */
+/* Video Container - Takes natural space */
 .video-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  width: 100%;
+  min-height: 50vh;
+  max-height: 70vh;
   background: #000;
   overflow: hidden;
 }
@@ -186,50 +85,59 @@ body {
   display: block;
 }
 
-/* Controls - Floating at bottom */
+/* Main Content - Scrollable */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Controls - Below Video in Natural Flow */
 .controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
+  position: relative;
   z-index: 15;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .camera-switch-btn {
   width: 100%;
-  padding: 14px 20px;
+  padding: 16px 20px;
   font-size: 1rem;
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  touch-action: manipulation;
 }
 
 .camera-switch-btn:active {
   transform: scale(0.98);
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .start-btn {
   width: 100%;
-  padding: 18px;
-  font-size: 1.2rem;
+  padding: 20px;
+  font-size: 1.3rem;
   font-weight: 700;
   border: none;
   border-radius: 15px;
   background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
   color: white;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+  box-shadow: 0 10px 30px rgba(17, 153, 142, 0.5);
   transition: all 0.2s ease;
+  touch-action: manipulation;
 }
 
 .start-btn:active {
@@ -239,16 +147,17 @@ body {
 
 .stop-btn {
   width: 100%;
-  padding: 18px;
-  font-size: 1.2rem;
+  padding: 20px;
+  font-size: 1.3rem;
   font-weight: 700;
   border: none;
   border-radius: 15px;
   background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
   color: white;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(238, 9, 121, 0.4);
+  box-shadow: 0 10px 30px rgba(238, 9, 121, 0.5);
   transition: all 0.2s ease;
+  touch-action: manipulation;
 }
 
 .stop-btn:active {
@@ -256,19 +165,16 @@ body {
   box-shadow: 0 5px 15px rgba(238, 9, 121, 0.4);
 }
 
-/* Footer - Floating at very bottom */
+/* Footer - Below Controls */
 .App-footer {
-  position: absolute;
-  bottom: 170px;
-  left: 20px;
-  right: 20px;
+  position: relative;
   z-index: 10;
   text-align: center;
   color: white;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.5);
+  padding: 15px 20px;
+  padding-bottom: 30px;
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
-  border-radius: 12px;
   font-size: 0.85rem;
   line-height: 1.4;
 }
@@ -277,16 +183,45 @@ body {
   margin: 0;
 }
 
-/* Main Content - Full screen */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+/* Small Phones */
+@media (max-width: 375px) {
+  .App-header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .video-container {
+    min-height: 40vh;
+    max-height: 60vh;
+  }
+  
+  .controls {
+    padding: 15px;
+    gap: 10px;
+  }
+  
+  .camera-switch-btn {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+  }
+  
+  .start-btn,
+  .stop-btn {
+    font-size: 1.15rem;
+    padding: 18px;
+  }
+  
+  .App-footer {
+    font-size: 0.8rem;
+    padding: 12px 15px 25px;
+  }
 }
 
-/* Landscape Mode Adjustments */
-@media (orientation: landscape) {
+/* Landscape Mode */
+@media (orientation: landscape) and (max-height: 600px) {
   .App-header {
     padding: 10px 20px;
   }
@@ -296,19 +231,17 @@ body {
   }
   
   .subtitle {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
   
-  .status-bar {
-    top: 60px;
-    padding: 8px 16px;
+  .video-container {
+    min-height: 40vh;
+    max-height: 50vh;
   }
   
   .controls {
-    bottom: 15px;
-    left: 15px;
-    right: 15px;
     flex-direction: row;
+    padding: 15px;
   }
   
   .camera-switch-btn,
@@ -320,20 +253,16 @@ body {
   }
   
   .App-footer {
-    bottom: 90px;
+    padding: 10px 15px 20px;
     font-size: 0.75rem;
   }
 }
 
-/* Desktop View (larger screens) */
+/* Desktop / Tablet */
 @media (min-width: 768px) {
   .App {
-    max-width: 100%;
-  }
-  
-  .video-container {
-    width: 100vw;
-    height: 100vh;
+    max-width: 600px;
+    margin: 0 auto;
   }
   
   .App-header h1 {
@@ -344,42 +273,9 @@ body {
     font-size: 1rem;
   }
   
-  .controls {
-    max-width: 500px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-}
-
-/* Small phones */
-@media (max-width: 375px) {
-  .App-header h1 {
-    font-size: 1.3rem;
-  }
-  
-  .subtitle {
-    font-size: 0.75rem;
-  }
-  
-  .status-text {
-    font-size: 0.85rem;
-  }
-  
-  .camera-switch-btn {
-    font-size: 0.95rem;
-    padding: 12px 16px;
-  }
-  
-  .start-btn,
-  .stop-btn {
-    font-size: 1.1rem;
-    padding: 16px;
-  }
-  
-  .App-footer {
-    font-size: 0.8rem;
-    padding: 10px;
-    bottom: 150px;
+  .video-container {
+    min-height: 60vh;
+    max-height: 70vh;
   }
 }
 
@@ -391,22 +287,13 @@ body {
   }
 }
 
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  .status-bar,
-  .camera-switch-btn,
-  .App-footer {
-    border: 2px solid white;
-  }
-}
-
-/* Safe area for notched phones (iPhone) */
+/* Safe Area for Notched Phones */
 @supports (padding: max(0px)) {
   .App-header {
     padding-top: max(15px, env(safe-area-inset-top));
   }
   
-  .controls {
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  .App-footer {
+    padding-bottom: max(30px, calc(env(safe-area-inset-bottom) + 15px));
   }
 }
