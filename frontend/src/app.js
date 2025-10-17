@@ -4,7 +4,7 @@ import eyeLogo from './eye.png';
 
 function App() {
   const [isActive, setIsActive] = useState(false);
-  const [cameraMode, setCameraMode] = useState('user'); // 'user' = front, 'environment' = rear
+  const [cameraMode, setCameraMode] = useState('user');
   const [status, setStatus] = useState('Ready to start');
   const [error, setError] = useState(null);
   
@@ -13,6 +13,7 @@ function App() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const audioContextRef = useRef(null);
+  const micAudioContextRef = useRef(null);
   const frameIntervalRef = useRef(null);
   const audioQueueRef = useRef([]);
   const isPlayingRef = useRef(false);
@@ -22,6 +23,12 @@ function App() {
     try {
       setError(null);
       setStatus('Starting camera...');
+      
+      // Create AudioContext here after user gesture (critical for mobile)
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext({ sampleRate: 24000 });
+        console.log('AudioContext created:', audioContextRef.current.state);
+      }
       
       // Request camera and microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -45,12 +52,11 @@ function App() {
       setStatus('Connecting to assistant...');
       
       // Connect to WebSocket
-      //   const ws = new WebSocket('ws://localhost:8000/ws/vision');
       const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/vision`;
       const ws = new WebSocket(WS_URL);
       
       ws.onopen = () => {
-        setStatus('Assistant active - Listening and watching');
+        setStatus('AIVA is active - Listening and watching');
         setIsActive(true);
         
         // Start sending video frames
@@ -64,18 +70,18 @@ function App() {
         const data = JSON.parse(event.data);
         
         if (data.type === 'audio') {
-            audioQueueRef.current.push(data.data);
-            playNextAudio();
+          console.log('Audio chunk received, queue length:', audioQueueRef.current.length);
+          audioQueueRef.current.push(data.data);
+          playNextAudio();
         } else if (data.type === 'tool_executed') {
-            // Show tool execution notification
-            setStatus(`✅ ${data.tool} executed successfully`);
-            console.log('Tool result:', data.result);
+          setStatus(`✅ ${data.tool} executed successfully`);
+          console.log('Tool result:', data.result);
         } else if (data.type === 'status') {
-            setStatus(data.message);
+          setStatus(data.message);
         } else if (data.type === 'error') {
-            setError(data.message);
+          setError(data.message);
         }
-     };
+      };
       
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
@@ -83,8 +89,11 @@ function App() {
       };
       
       ws.onclose = () => {
+        console.log('WebSocket closed');
         setStatus('Disconnected');
         setIsActive(false);
+        audioQueueRef.current = [];
+        isPlayingRef.current = false;
       };
       
       wsRef.current = ws;
@@ -104,7 +113,13 @@ function App() {
       frameIntervalRef.current = null;
     }
     
-    // Stop audio
+    // Stop and close microphone audio context
+    if (micAudioContextRef.current) {
+      micAudioContextRef.current.close();
+      micAudioContextRef.current = null;
+    }
+    
+    // Close playback audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -121,6 +136,10 @@ function App() {
       wsRef.current.close();
       wsRef.current = null;
     }
+    
+    // Clear audio queue
+    audioQueueRef.current = [];
+    isPlayingRef.current = false;
     
     setIsActive(false);
     setStatus('Stopped');
@@ -161,7 +180,7 @@ function App() {
   // Start capturing and sending audio
   const startAudioCapture = (stream) => {
     const audioContext = new AudioContext({ sampleRate: 16000 });
-    audioContextRef.current = audioContext;
+    micAudioContextRef.current = audioContext;
     
     const source = audioContext.createMediaStreamSource(stream);
     const processor = audioContext.createScriptProcessor(1024, 1, 1);
@@ -185,7 +204,7 @@ function App() {
     processor.connect(audioContext.destination);
   };
 
-  // Play audio response
+  // Play audio response - FIXED FOR MOBILE
   const playNextAudio = async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) {
       return;
@@ -195,11 +214,21 @@ function App() {
     const hexData = audioQueueRef.current.shift();
     
     try {
-      const audioContext = new AudioContext({ sampleRate: 24000 });
+      // Use the shared audio context created on button click
+      const audioContext = audioContextRef.current;
       
+      if (!audioContext) {
+        console.error('No AudioContext available');
+        isPlayingRef.current = false;
+        return;
+      }
+      
+      // CRITICAL FOR MOBILE: Resume if suspended
       if (audioContext.state === 'suspended') {
+        console.log('Resuming suspended AudioContext');
         await audioContext.resume();
       }
+      
       // Convert hex to bytes
       const bytes = new Uint8Array(
         hexData.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
@@ -229,6 +258,11 @@ function App() {
     } catch (err) {
       console.error('Audio playback error:', err);
       isPlayingRef.current = false;
+      
+      // Try next chunk after error
+      setTimeout(() => {
+        playNextAudio();
+      }, 50);
     }
   };
 
@@ -257,18 +291,20 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>AIVA</h1>
+        <h1>👁️ AIVA</h1>
         <p className="subtitle">Real-time AI Visual Assistant</p>
       </header>
+
       {!isActive && (
         <div className="landing-animation">
-        <img 
+          <img 
             src={eyeLogo}
             alt="AIVA Eye" 
             className="eye-logo" 
-        />
+          />
         </div>
       )}
+
       <main className="main-content">
         {error && (
           <div className="error-banner" role="alert">
@@ -284,19 +320,18 @@ function App() {
         </div>
 
         <div className={`video-container ${isActive ? 'active' : ''}`}>
-        <video
+          <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
             className="video-preview"
-        />
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
+          />
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
 
-
         <footer className="App-footer">
-            <p> Speak naturally - the assistant will describe what it sees and answer your questions!</p>
+          <p>🎤 Speak naturally - the assistant will describe what it sees and answer your questions!</p>
         </footer>
 
         <div className="controls">
@@ -305,7 +340,7 @@ function App() {
             onClick={switchCamera}
             aria-label={`Switch to ${cameraMode === 'user' ? 'rear' : 'front'} camera`}
           >
-          {cameraMode === 'user' ? 'Front Camera Active' : 'Rear Camera Active'}
+            {cameraMode === 'user' ? '📱 Front Camera Active' : '📷 Rear Camera Active'}
           </button>
 
           {!isActive ? (
@@ -314,7 +349,7 @@ function App() {
               onClick={startAssistant}
               aria-label="Start vision assistant"
             >
-              Wake AIVA
+              ▶️ Wake AIVA
             </button>
           ) : (
             <button
@@ -322,7 +357,7 @@ function App() {
               onClick={stopAssistant}
               aria-label="Stop vision assistant"
             >
-              ⏹️ Stop Assistant
+              ⏹️ Sleep AIVA
             </button>
           )}
         </div>
