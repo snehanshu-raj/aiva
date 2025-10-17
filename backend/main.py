@@ -103,36 +103,70 @@ class VisionAssistantTools:
             return {"raw": raw_message}
         
         try:
-            # Load credentials
             creds = None
-            token_path = Path("token.json")
-            creds_path = Path("credentials.json")
             
-            if token_path.exists():
-                creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+            # Try to load from environment variables (Cloud Run secrets)
+            credentials_json_str = os.getenv("GMAIL_CREDENTIALS_JSON")
+            token_json_str = os.getenv("GMAIL_TOKEN_JSON")
             
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
+            # If secrets exist, use them (Cloud Run)
+            if credentials_json_str and token_json_str:
+                print("📧 Loading Gmail credentials from secrets...")
+                
+                # Parse token JSON
+                token_info = json.loads(token_json_str)
+                creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+                
+                # Refresh if expired
+                if creds.expired and creds.refresh_token:
                     try:
                         creds.refresh(Request())
-                    except Exception:
-                        if token_path.exists():
-                            token_path.unlink()
+                        print("✅ Token refreshed successfully")
+                    except Exception as refresh_error:
+                        print(f"⚠️ Token refresh failed: {refresh_error}")
                         return {
                             "success": False,
-                            "message": "Gmail authentication expired. Please restart and re-authenticate."
+                            "message": "Gmail token expired and refresh failed. Please update token in secrets."
                         }
-                else:
-                    if not creds_path.exists():
-                        return {
-                            "success": False,
-                            "message": "credentials.json not found. Please set up Gmail API credentials."
-                        }
-                    flow = InstalledAppFlow.from_client_secrets_file(str(creds_path), SCOPES)
-                    creds = flow.run_local_server(port=0)
+            
+            # Fallback to local files (development mode)
+            else:
+                print("📧 Loading Gmail credentials from local files...")
+                token_path = Path("token.json")
+                creds_path = Path("credentials.json")
                 
-                with open(token_path, "w") as token:
-                    token.write(creds.to_json())
+                if token_path.exists():
+                    creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+                
+                if not creds or not creds.valid:
+                    if creds and creds.expired and creds.refresh_token:
+                        try:
+                            creds.refresh(Request())
+                        except Exception:
+                            if token_path.exists():
+                                token_path.unlink()
+                            return {
+                                "success": False,
+                                "message": "Gmail authentication expired. Please restart and re-authenticate."
+                            }
+                    else:
+                        if not creds_path.exists():
+                            return {
+                                "success": False,
+                                "message": "credentials.json not found. Please set up Gmail API credentials."
+                            }
+                        flow = InstalledAppFlow.from_client_secrets_file(str(creds_path), SCOPES)
+                        creds = flow.run_local_server(port=0)
+                    
+                    with open(token_path, "w") as token:
+                        token.write(creds.to_json())
+            
+            # Check if we have valid credentials
+            if not creds or not creds.valid:
+                return {
+                    "success": False,
+                    "message": "Unable to authenticate with Gmail. Please check credentials."
+                }
             
             # Build Gmail service
             service = build("gmail", "v1", credentials=creds)
@@ -145,7 +179,6 @@ class VisionAssistantTools:
             if attach_frame_id:
                 # Handle special keywords
                 if attach_frame_id.lower() in ["current", "latest", "last", "this", "that"]:
-                    # Get most recent capture from this session
                     if self.session_captures:
                         most_recent = max(self.session_captures.keys(), 
                                         key=lambda k: self.session_captures[k]['timestamp'])
@@ -153,7 +186,6 @@ class VisionAssistantTools:
                         attached_frame = most_recent
                         print(f"📎 Attaching most recent capture: {most_recent}")
                     elif captured_frames:
-                        # Fallback to global captures
                         most_recent = max(captured_frames.keys(), 
                                         key=lambda k: captured_frames[k]['timestamp'])
                         image_path = captured_frames[most_recent]["filepath"]
@@ -161,7 +193,6 @@ class VisionAssistantTools:
                         print(f"📎 Attaching most recent global capture: {most_recent}")
                     else:
                         print(f"⚠️ No captures available to attach")
-                # Check if specific frame_id exists
                 elif attach_frame_id in captured_frames:
                     image_path = captured_frames[attach_frame_id]["filepath"]
                     attached_frame = attach_frame_id
