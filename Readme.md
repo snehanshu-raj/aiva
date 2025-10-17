@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="aiva.png" alt="AIVA Logo" width="250" height="250">
+  <img src="aiva.png" alt="AIVA Logo" width="300" height="300">
 </p>
 
 <h1 align="center">AIVA - Artificial Intelligence Visual Assistant</h1>
@@ -8,10 +8,10 @@ An AI-powered visual assistance platform that empowers everyone through real-tim
 <h4> AIVA brings the power of Google's Gemini 2.0 multimodal AI to create an accessible, real-time visual assistant. Whether you're visually impaired, need hands-free assistance, or simply want an AI companion to understand your surroundings, this app makes the world more accessible. </h4>
 
 <p align="center">
-  <a href="https://your-app-url.run.app">
+  <a href="https://aiva-988633298112.us-west1.run.app/">
     <img src="https://img.shields.io/badge/🚀%20Try%20It%20Live-Click%20Here-brightgreen?style=for-the-badge" alt="Try Live Demo"/>
   </a>
-  <a href="https://www.youtube.com/watch?v=your-demo-video-id">
+  <a href="https://www.youtube.com/watch?v=sNPtSqpnk0Y">
     <img src="https://img.shields.io/badge/%20Watch%20Demo-YouTube-red?style=for-the-badge&logo=youtube" alt="Watch Demo"/>
   </a>
 </p>
@@ -67,6 +67,24 @@ While designed with visual impairment in mind, AIVA Companion serves everyone:
 - Students documenting lectures or whiteboards
 - Travelers navigating foreign languages
 - Anyone needing hands-free visual assistance
+
+## Step-by-Step Screenshots
+
+### Step 1: Open the app (Web View)
+![Step 1](https://drive.google.com/thumbnail?id=1wPjzDxW8ERBjfv8HMdhBrA_twX2a1q9_&sz=w600)
+
+### Mobile View
+![Step 2](https://drive.google.com/thumbnail?id=1jNW07sqHJA7J3gBVOmvEh5WPQV_mij-k&sz=w600)
+
+### Step 2: Select either front or rear camera
+![Step 3](https://drive.google.com/thumbnail?id=1BrviZga0DtBXTo-LncOu79Z045SyyEKh&sz=w600)
+
+### Step 3: Select Start AIVA
+![Step 3](https://drive.google.com/thumbnail?id=1eZMkmOQGq5ZmK9jJG7V6c51scTFgBxXZ&sz=w600)
+
+### Step 4: Start talking!
+![Step 4](https://drive.google.com/thumbnail?id=1clif3rHJE_N7n9ExIYFtngBOAWAUkyR_&sz=w600)
+
 
 ## 🚀 Quick Start
 
@@ -198,3 +216,12 @@ aiva/
 - **Google Cloud Run** - Serverless deployment
 - **Uvicorn** - ASGI server
 ---
+
+## Thank You!
+AIVA is **just the beginning**: a glimpse into how AI can truly see and understand the world around us.  
+
+With its foundation in real-time vision, voice interaction, and intelligent automation, AIVA has immense potential to evolve into a full-fledged personal assistant that makes everyday life simpler, smarter, and more connected.
+
+Future updates could bring object tracking, smart home integration, and wearable device support, transforming AIVA into an always-available visual companion that bridges technology and human experience.
+
+✨ AIVA isn’t just an app; it’s the next step toward a more accessible, high-tech world where AI helps everyone see, understand, and interact effortlessly.

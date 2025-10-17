@@ -49,7 +49,7 @@ def load_metadata():
             with open(METADATA_FILE, "r") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"⚠️ Could not load metadata: {e}")
+            print(f"Could not load metadata: {e}")
             return {}
     return {}
 
@@ -118,7 +118,7 @@ class VisionAssistantTools:
 
             # If secrets exist, use them (Cloud Run)
             if credentials_json_str and token_json_str:
-                print("📧 Loading Gmail credentials from secrets...")
+                print("Loading Gmail credentials from secrets...")
                 
                 # Parse token JSON
                 token_info = json.loads(token_json_str)
@@ -128,9 +128,9 @@ class VisionAssistantTools:
                 if creds.expired and creds.refresh_token:
                     try:
                         creds.refresh(Request())
-                        print("✅ Token refreshed successfully")
+                        print("Token refreshed successfully")
                     except Exception as refresh_error:
-                        print(f"⚠️ Token refresh failed: {refresh_error}")
+                        print(f"Token refresh failed: {refresh_error}")
                         return {
                             "success": False,
                             "message": "Gmail token expired and refresh failed. Please update token in secrets."
@@ -138,7 +138,7 @@ class VisionAssistantTools:
             
             # Fallback to local files (development mode)
             else:
-                print("📧 Loading Gmail credentials from local files...")
+                print("Loading Gmail credentials from local files...")
                 token_path = Path("token.json")
                 creds_path = Path("credentials.json")
                 
@@ -191,36 +191,36 @@ class VisionAssistantTools:
                                         key=lambda k: self.session_captures[k]['timestamp'])
                         image_path = self.session_captures[most_recent]["filepath"]
                         attached_frame = most_recent
-                        print(f"📎 Attaching most recent capture: {most_recent}")
+                        print(f"Attaching most recent capture: {most_recent}")
                     elif captured_frames:
                         most_recent = max(captured_frames.keys(), 
                                         key=lambda k: captured_frames[k]['timestamp'])
                         image_path = captured_frames[most_recent]["filepath"]
                         attached_frame = most_recent
-                        print(f"📎 Attaching most recent global capture: {most_recent}")
+                        print(f"Attaching most recent global capture: {most_recent}")
                     else:
-                        print(f"⚠️ No captures available to attach")
+                        print(f"No captures available to attach")
                 elif attach_frame_id in captured_frames:
                     image_path = captured_frames[attach_frame_id]["filepath"]
                     attached_frame = attach_frame_id
-                    print(f"📎 Attaching: {attach_frame_id}")
+                    print(f"Attaching: {attach_frame_id}")
                 else:
-                    print(f"⚠️ Frame '{attach_frame_id}' not found")
+                    print(f"Frame '{attach_frame_id}' not found")
             
             # Verify image file exists
             if image_path and not Path(image_path).exists():
-                print(f"⚠️ Image file not found: {image_path}")
+                print(f"Image file not found: {image_path}")
                 image_path = None
             
             # Create and send message
             message = create_message_with_attachment(sender, recipient, subject, body, image_path)
             send_result = service.users().messages().send(userId="me", body=message).execute()
             
-            print(f"📧 Email sent to {recipient}, Message ID: {send_result['id']}")
+            print(f"Email sent to {recipient}, Message ID: {send_result['id']}")
             if image_path:
-                print(f"✅ With attachment: {Path(image_path).name}")
+                print(f"With attachment: {Path(image_path).name}")
             else:
-                print(f"⚠️ No attachment included")
+                print(f"No attachment included")
             
             return {
                 "success": True,
@@ -233,13 +233,13 @@ class VisionAssistantTools:
             }
             
         except HttpError as error:
-            print(f"❌ Gmail API error: {error}")
+            print(f"Gmail API error: {error}")
             return {
                 "success": False,
                 "message": f"Failed to send email: {str(error)}"
             }
         except Exception as e:
-            print(f"❌ Email error: {e}")
+            print(f"Email error: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -299,8 +299,8 @@ class VisionAssistantTools:
                                    key=lambda k: captured_frames[k]['timestamp'])
                     del captured_frames[oldest_key]
                 
-                print(f"📸 Frame saved: {filepath} ({len(image_data)} bytes)")
-                print(f"💾 Total captures this session: {len(self.session_captures)}")
+                print(f"Frame saved: {filepath} ({len(image_data)} bytes)")
+                print(f"Total captures this session: {len(self.session_captures)}")
                 
                 size_kb = round(len(image_data) / 1024, 2)
                 del image_data  # Free memory
@@ -586,7 +586,7 @@ async def vision_websocket(websocket: WebSocket):
     try:
         async with client.aio.live.connect(model=model, config=config) as session:
             print("Vision Assistant session started")
-            print(f"📁 Captures directory: {CAPTURES_DIR.absolute()}")
+            print(f"Captures directory: {CAPTURES_DIR.absolute()}")
             
             await websocket.send_json({
                 "type": "status",
@@ -609,8 +609,8 @@ async def vision_websocket(websocket: WebSocket):
                                         tool_name = func_call.name
                                         arguments = dict(func_call.args)
                                         
-                                        print(f"🔧 Tool called: {tool_name}")
-                                        print(f"   Arguments: {arguments}")
+                                        print(f"Tool called: {tool_name}")
+                                        print(f"Arguments: {arguments}")
                                         
                                         # Execute the tool
                                         result = await execute_tool(tool_instance, tool_name, arguments)
@@ -648,7 +648,7 @@ async def vision_websocket(websocket: WebSocket):
                                 
                                 # If shutdown requested, break after response
                                 if should_shutdown:
-                                    print("🛑 Shutdown requested, ending session...")
+                                    print("Shutdown requested, ending session...")
                                     await websocket.send_json({
                                         "type": "shutdown",
                                         "message": "Session ending gracefully"
@@ -657,7 +657,7 @@ async def vision_websocket(websocket: WebSocket):
                                     raise asyncio.CancelledError("Graceful shutdown")
                                 
                             except Exception as e:
-                                print(f"❌ Response processing error: {e}")
+                                print(f"Response processing error: {e}")
                                 import traceback
                                 traceback.print_exc()
                                 
@@ -665,7 +665,7 @@ async def vision_websocket(websocket: WebSocket):
                     print("Receive task cancelled (graceful shutdown)")
                     raise
                 except Exception as e:
-                    print(f"❌ Receive error: {e}")
+                    print(f"Receive error: {e}")
             
             async def receive_from_client():
                 try:
@@ -722,8 +722,8 @@ async def vision_websocket(websocket: WebSocket):
                 print(f"Unexpected error: {e}")
     finally:
         save_metadata(captured_frames)
-        print(f"✅ Session ended. Captures saved: {len(session_captures)}")
-        print(f"📋 Session summary: {list(session_captures.keys())}")
+        print(f"Session ended. Captures saved: {len(session_captures)}")
+        print(f"Session summary: {list(session_captures.keys())}")
         latest_frame["data"] = None
 
 STATIC_DIR = Path("/app/static")
