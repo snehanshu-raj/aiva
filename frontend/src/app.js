@@ -291,7 +291,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>👁️ AIVA</h1>
+        <h1>AIVA</h1>
         <p className="subtitle">Real-time AI Visual Assistant</p>
       </header>
 
@@ -331,7 +331,7 @@ function App() {
         </div>
 
         <footer className="App-footer">
-          <p>🎤 Speak naturally - the assistant will describe what it sees and answer your questions!</p>
+          <p>Speak naturally - the assistant will describe what it sees and answer your questions!</p>
         </footer>
 
         <div className="controls">
@@ -340,7 +340,7 @@ function App() {
             onClick={switchCamera}
             aria-label={`Switch to ${cameraMode === 'user' ? 'rear' : 'front'} camera`}
           >
-            {cameraMode === 'user' ? '📱 Front Camera Active' : '📷 Rear Camera Active'}
+            {cameraMode === 'user' ? 'Front Camera Active' : 'Rear Camera Active'}
           </button>
 
           {!isActive ? (
@@ -349,7 +349,7 @@ function App() {
               onClick={startAssistant}
               aria-label="Start vision assistant"
             >
-              ▶️ Wake AIVA
+              Start AIVA
             </button>
           ) : (
             <button
@@ -357,7 +357,7 @@ function App() {
               onClick={stopAssistant}
               aria-label="Stop vision assistant"
             >
-              ⏹️ Sleep AIVA
+              Sleep AIVA
             </button>
           )}
         </div>

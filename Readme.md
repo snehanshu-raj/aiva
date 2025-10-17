@@ -18,7 +18,11 @@ An AI-powered visual assistance platform that empowers everyone through real-tim
 
 ## ✨ Features
 
-### 🎤 **Voice-First Interaction**
+### 🎥 **Live Camera Support**
+- Front and rear camera switching.
+- Real-time video streaming to AI and voice chat!
+
+### 🎤 **Real Time Voice Responses**
 - Natural conversation with AI about your surroundings.
 - Real-time scene description and object recognition.
 - Hands-free operation perfect for accessibility.
@@ -26,17 +30,10 @@ An AI-powered visual assistance platform that empowers everyone through real-tim
 ### 📸 **Smart Image Capture**
 - Voice-commanded photo capture.
 - Automatic saving with intelligent naming.
-- Session-based organization with metadata.
 
 ### 📧 **Intelligent Email Integration**
 - Email captured images with voice commands.
-- "Email this to me" - automatic recipient detection.
-- Attach specific captures to emails.
-
-### 🎥 **Live Camera Support**
-- Front and rear camera switching.
-- Real-time video streaming to AI.
-- Mobile-optimized camera controls.
+- "Email this abcd@example.com" - automatic recipient detection and sends image as attatchement!
 
 ### 🔒 **Privacy-First Design**
 - Secure WebSocket communication
@@ -107,7 +104,6 @@ docker run -p 8080:8080 -e GOOGLE_API_KEY=<your_api_key_here> aiva
 ## 📁 Project Structure
 
 ```
-
 aiva/
 ├── backend/                   # FastAPI backend
 │   ├── main.py                # Main application \& WebSocket handler
@@ -157,7 +153,6 @@ aiva/
 "Capture this as my desk"
 "Take a picture of this scene"
 "Save this as front door"
-
 ```
 
 ### Email Commands
@@ -165,7 +160,6 @@ aiva/
 "Email this to me"
 "Send the desk picture to me"
 "Email the front door image with subject 'Entry way'"
-
 ```
 
 ### Info & Search Commands
@@ -174,18 +168,13 @@ aiva/
 "What did I capture?"
 "Show me my pictures"
 "List all captures"
-
 ```
 
 ### Session Commands
 ```
-
-"What did I save today?"
+"What did I keep my earphones?"
 "Show session summary"
-"I am done, thank you"
-
 ```
-
 ---
 
 ## 🛠️ Technology Stack
@@ -208,5 +197,4 @@ aiva/
 - **Docker** - Containerization
 - **Google Cloud Run** - Serverless deployment
 - **Uvicorn** - ASGI server
-
 ---
