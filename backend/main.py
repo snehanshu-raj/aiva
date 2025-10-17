@@ -108,7 +108,14 @@ class VisionAssistantTools:
             # Try to load from environment variables (Cloud Run secrets)
             credentials_json_str = os.getenv("GMAIL_CREDENTIALS_JSON")
             token_json_str = os.getenv("GMAIL_TOKEN_JSON")
+            print(f"GMAIL_CREDENTIALS_JSON exists: {credentials_json_str is not None}")
+            print(f"GMAIL_TOKEN_JSON exists: {token_json_str is not None}")
             
+            if credentials_json_str:
+                print(f"GMAIL_CREDENTIALS_JSON length: {len(credentials_json_str)} characters")
+            if token_json_str:
+                print(f"GMAIL_TOKEN_JSON length: {len(token_json_str)} characters")
+
             # If secrets exist, use them (Cloud Run)
             if credentials_json_str and token_json_str:
                 print("📧 Loading Gmail credentials from secrets...")
