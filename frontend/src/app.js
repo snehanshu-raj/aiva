@@ -253,9 +253,14 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>👁️ Vision Assistant</h1>
-        <p className="subtitle">AI-powered visual assistance</p>
+        <h1>👁️ AIVA</h1>
+        <p className="subtitle">Real-time AI Visual Assistant</p>
       </header>
+
+    <div className={`connection-status ${isActive ? 'connected' : 'disconnected'}`}>
+        <span className="status-dot"></span>
+        <span className="status-label">{isActive ? 'Connected' : 'Disconnected'}</span>
+    </div>
 
       <main className="main-content">
         {error && (
