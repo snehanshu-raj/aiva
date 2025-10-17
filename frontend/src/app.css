@@ -47,6 +47,21 @@ body {
   opacity: 0.9;
 }
 
+/* Landing Animation - Tight spacing */
+.landing-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 20px;
+  margin: 0;
+}
+
+.eye-logo {
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+}
+
 /* Error Banner */
 .error-banner {
   position: sticky;
@@ -68,21 +83,20 @@ body {
   display: none;
 }
 
-.status-indicator {
-  font-size: 1rem;
-}
-
-.status-text {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Video Container */
+/* Video Container - Hidden when inactive, full when active */
 .video-container {
   position: relative;
   width: 100%;
+  min-height: 0vh;
+  max-height: 0vh;
   background: #000;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.video-container.active {
+  min-height: 40vh;
+  max-height: 50vh;
 }
 
 .video-preview {
@@ -100,13 +114,13 @@ body {
   position: relative;
 }
 
-/* Footer */
+/* Footer - Minimal spacing */
 .App-footer {
   position: relative;
   z-index: 10;
   text-align: center;
   color: white;
-  padding: 10px 20px;
+  padding: 5px 20px;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
   font-size: 0.85rem;
@@ -118,15 +132,17 @@ body {
   margin: 0;
 }
 
-/* Controls */
+/* Controls - Pushed down on mobile */
 .controls {
   position: relative;
   z-index: 15;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 15px 20px;
+  padding: 5px 20px 40px;
   background: rgba(0, 0, 0, 0.9);
+  margin: 0;
+  margin-top: auto;
 }
 
 .camera-switch-btn {
@@ -190,23 +206,6 @@ body {
   box-shadow: 0 5px 15px rgba(238, 9, 121, 0.4);
 }
 
-/* Mobile - Small video before starting */
-@media (max-width: 767px) {
-  .video-container {
-    min-height: 30vh;
-    max-height: 40vh;
-  }
-  
-  .App-footer {
-    padding: 8px 15px;
-    font-size: 0.8rem;
-  }
-  
-  .controls {
-    padding: 12px 15px;
-  }
-}
-
 /* Small Phones */
 @media (max-width: 375px) {
   .App-header h1 {
@@ -215,6 +214,25 @@ body {
   
   .subtitle {
     font-size: 0.75rem;
+  }
+  
+  .landing-animation {
+    padding: 5px 15px;
+    margin: 0;
+  }
+  
+  .eye-logo {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .App-footer {
+    padding: 5px 15px;
+    font-size: 0.8rem;
+  }
+  
+  .controls {
+    padding: 5px 15px 40px;
   }
   
   .camera-switch-btn {
@@ -227,9 +245,27 @@ body {
     font-size: 1.15rem;
     padding: 18px;
   }
+  
+  .video-container.active {
+    min-height: 35vh;
+    max-height: 45vh;
+  }
 }
 
-/* Tablet/Laptop - Full screen video */
+/* Mobile devices - More bottom spacing */
+@media (max-width: 767px) {
+  .controls {
+    padding: 5px 20px 40px;
+    margin-top: auto;
+  }
+  
+  .video-container.active {
+    min-height: 40vh;
+    max-height: 50vh;
+  }
+}
+
+/* Tablet/Laptop - Full screen video when active */
 @media (min-width: 768px) {
   .App-header h1 {
     font-size: 2rem;
@@ -239,7 +275,7 @@ body {
     font-size: 1rem;
   }
   
-  .video-container {
+  .video-container.active {
     min-height: 75vh;
     max-height: 85vh;
   }
@@ -247,12 +283,17 @@ body {
   .controls {
     max-width: 500px;
     margin: 0 auto;
+    padding: 10px 20px 25px;
+  }
+  
+  .landing-animation {
+    padding: 10px 20px;
   }
 }
 
-/* Desktop - Nearly full screen */
+/* Desktop - Nearly full screen when active */
 @media (min-width: 1024px) {
-  .video-container {
+  .video-container.active {
     min-height: 80vh;
     max-height: 90vh;
   }
@@ -272,14 +313,14 @@ body {
     font-size: 0.7rem;
   }
   
-  .video-container {
+  .video-container.active {
     min-height: 50vh;
     max-height: 60vh;
   }
   
   .controls {
     flex-direction: row;
-    padding: 12px 15px;
+    padding: 10px 15px 20px;
   }
   
   .camera-switch-btn,
@@ -291,8 +332,17 @@ body {
   }
   
   .App-footer {
-    padding: 8px 15px;
+    padding: 5px 15px;
     font-size: 0.75rem;
+  }
+  
+  .landing-animation {
+    padding: 5px 15px;
+  }
+  
+  .eye-logo {
+    width: 180px;
+    height: 180px;
   }
 }
 
@@ -304,13 +354,13 @@ body {
   }
 }
 
-/* Safe Area for Notched Phones */
+/* Safe Area for Notched Phones - Extra bottom padding */
 @supports (padding: max(0px)) {
   .App-header {
     padding-top: max(15px, env(safe-area-inset-top));
   }
   
   .controls {
-    padding-bottom: max(15px, calc(env(safe-area-inset-bottom) + 10px));
+    padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 30px));
   }
 }

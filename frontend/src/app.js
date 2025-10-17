@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './app.css';
+import eyeLogo from './eye.png';
 
 function App() {
   const [isActive, setIsActive] = useState(false);
@@ -256,7 +257,15 @@ function App() {
         <h1>AIVA</h1>
         <p className="subtitle">Real-time AI Visual Assistant</p>
       </header>
-
+      {!isActive && (
+        <div className="landing-animation">
+        <img 
+            src={eyeLogo}
+            alt="AIVA Eye" 
+            className="eye-logo" 
+        />
+        </div>
+      )}
       <main className="main-content">
         {error && (
           <div className="error-banner" role="alert">
@@ -271,17 +280,18 @@ function App() {
           <span className="status-text">{status}</span>
         </div>
 
-        <div className="video-container">
-          <video
+        <div className={`video-container ${isActive ? 'active' : ''}`}>
+        <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
             className="video-preview"
-          />
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
+        />
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
-        
+
+
         <footer className="App-footer">
             <p> Speak naturally - the assistant will describe what it sees and answer your questions!</p>
         </footer>
