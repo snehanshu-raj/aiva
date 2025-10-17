@@ -197,6 +197,9 @@ function App() {
     try {
       const audioContext = new AudioContext({ sampleRate: 24000 });
       
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
       // Convert hex to bytes
       const bytes = new Uint8Array(
         hexData.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
