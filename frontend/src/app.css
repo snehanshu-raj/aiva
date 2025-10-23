@@ -22,7 +22,6 @@ body {
   background: #000;
 }
 
-/* Header - Compact on mobile */
 .App-header {
   position: sticky;
   top: 0;
@@ -47,7 +46,6 @@ body {
   opacity: 0.9;
 }
 
-/* Landing Animation - Tight spacing */
 .landing-animation {
   display: flex;
   justify-content: center;
@@ -62,7 +60,6 @@ body {
   object-fit: contain;
 }
 
-/* Error Banner */
 .error-banner {
   position: sticky;
   top: 60px;
@@ -78,12 +75,73 @@ body {
   margin: 10px 20px;
 }
 
-/* Status Bar */
 .status-bar {
-  display: none;
+  position: sticky;
+  top: 65px;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
-/* Video Container - Almost fullscreen on mobile when active */
+.status-indicator {
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.status-text {
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.status-bar.monitoring {
+  background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
+  border-bottom: 2px solid #ff8c00;
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
+  animation: pulse-monitoring 2s infinite;
+}
+
+.status-bar.monitoring .status-text {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+}
+
+.status-bar.monitoring .status-indicator {
+  font-size: 22px;
+  animation: spin-icon 2s linear infinite;
+}
+
+@keyframes pulse-monitoring {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 30px rgba(255, 107, 0, 0.7);
+  }
+}
+
+@keyframes spin-icon {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .video-container {
   position: relative;
   width: 100%;
@@ -106,7 +164,6 @@ body {
   display: block;
 }
 
-/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -114,7 +171,6 @@ body {
   position: relative;
 }
 
-/* Footer - Compact on mobile */
 .App-footer {
   position: relative;
   z-index: 10;
@@ -132,7 +188,6 @@ body {
   margin: 0;
 }
 
-/* Controls - Compact on mobile */
 .controls {
   position: relative;
   z-index: 15;
@@ -206,7 +261,6 @@ body {
   box-shadow: 0 5px 15px rgba(238, 9, 121, 0.4);
 }
 
-/* Small Phones - Almost fullscreen video */
 @media (max-width: 375px) {
   .App-header {
     padding: 8px 15px;
@@ -218,6 +272,19 @@ body {
   
   .subtitle {
     font-size: 0.7rem;
+  }
+  
+  .status-bar {
+    padding: 6px 12px;
+    top: 55px;
+  }
+  
+  .status-indicator {
+    font-size: 16px;
+  }
+  
+  .status-text {
+    font-size: 0.75rem;
   }
   
   .landing-animation {
@@ -257,7 +324,6 @@ body {
   }
 }
 
-/* Mobile devices - Big video */
 @media (max-width: 767px) {
   .video-container.active {
     min-height: 65vh;
@@ -265,7 +331,6 @@ body {
   }
 }
 
-/* Tablet/Laptop - Full screen video when active */
 @media (min-width: 768px) {
   .App-header h1 {
     font-size: 2rem;
@@ -277,6 +342,18 @@ body {
   
   .App-header {
     padding: 15px 20px;
+  }
+  
+  .status-bar {
+    padding: 10px 20px;
+  }
+  
+  .status-indicator {
+    font-size: 20px;
+  }
+  
+  .status-text {
+    font-size: 0.95rem;
   }
   
   .video-container.active {
@@ -300,7 +377,6 @@ body {
   }
 }
 
-/* Desktop - Nearly full screen when active */
 @media (min-width: 1024px) {
   .video-container.active {
     min-height: 80vh;
@@ -308,7 +384,6 @@ body {
   }
 }
 
-/* Landscape Mode on Phone */
 @media (orientation: landscape) and (max-height: 600px) {
   .App-header {
     padding: 8px 15px;
@@ -320,6 +395,10 @@ body {
   
   .subtitle {
     font-size: 0.65rem;
+  }
+  
+  .status-bar {
+    padding: 5px 12px;
   }
   
   .video-container.active {
@@ -356,7 +435,6 @@ body {
   }
 }
 
-/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -364,7 +442,6 @@ body {
   }
 }
 
-/* Safe Area for Notched Phones */
 @supports (padding: max(0px)) {
   .App-header {
     padding-top: max(10px, env(safe-area-inset-top));

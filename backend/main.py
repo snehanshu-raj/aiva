@@ -9,7 +9,11 @@ import base64
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
-import sys
+import logging
+import warnings
+
+warnings.filterwarnings("ignore", message=".*non-text parts.*")
+warnings.filterwarnings("ignore", message=".*non-data parts.*")
 from google import genai
 from google.genai import types
 from email.mime.text import MIMEText
@@ -65,17 +69,27 @@ def save_metadata(metadata):
 captured_frames = load_metadata()
 MAX_METADATA_ENTRIES = 100
 
+
+class SessionState:
+    """Holds session state for continuous monitoring"""
+    def __init__(self):
+        self.continuous_mode = False
+        self.last_description = ""
+        self.monitoring_context = None  
+        self.last_notification_time = datetime.now()
+
+
 class VisionAssistantTools:
     """Tools that can be called via voice commands"""
-    def __init__(self, get_latest_frame_callback, session_captures):
+    def __init__(self, get_latest_frame_callback, session_captures, session_state):
         self.get_latest_frame = get_latest_frame_callback
-        self.session_captures = session_captures  
-        self.processing_lock = asyncio.Lock()  
+        self.session_captures = session_captures
+        self.session_state = session_state
+        self.processing_lock = asyncio.Lock()
         
     async def send_email(self, recipient: Optional[str] = None, subject: str = "Vision Assistant Capture", body: str = "Here's the image you requested.", attach_frame_id: Optional[str] = None):
         """Send email with optional image attachment using Gmail API"""
         
-        # Use default email if recipient not specified
         if not recipient or recipient.lower() in ["me", "myself", "my email"]:
             recipient = DEFAULT_EMAIL
         
@@ -88,11 +102,9 @@ class VisionAssistantTools:
             message["from"] = sender
             message["subject"] = subject
             
-            # Add body
             msg = MIMEText(body_text)
             message.attach(msg)
             
-            # Add image attachment if provided
             if image_path and Path(image_path).exists():
                 with open(image_path, 'rb') as f:
                     img_data = f.read()
@@ -105,7 +117,6 @@ class VisionAssistantTools:
         try:
             creds = None
             
-            # Try to load from environment variables (Cloud Run secrets)
             credentials_json_str = os.getenv("GMAIL_CREDENTIALS_JSON")
             token_json_str = os.getenv("GMAIL_TOKEN_JSON")
             print(f"GMAIL_CREDENTIALS_JSON exists: {credentials_json_str is not None}")
@@ -116,15 +127,11 @@ class VisionAssistantTools:
             if token_json_str:
                 print(f"GMAIL_TOKEN_JSON length: {len(token_json_str)} characters")
 
-            # If secrets exist, use them (Cloud Run)
             if credentials_json_str and token_json_str:
                 print("Loading Gmail credentials from secrets...")
-                
-                # Parse token JSON
                 token_info = json.loads(token_json_str)
                 creds = Credentials.from_authorized_user_info(token_info, SCOPES)
                 
-                # Refresh if expired
                 if creds.expired and creds.refresh_token:
                     try:
                         creds.refresh(Request())
@@ -136,7 +143,6 @@ class VisionAssistantTools:
                             "message": "Gmail token expired and refresh failed. Please update token in secrets."
                         }
             
-            # Fallback to local files (development mode)
             else:
                 print("Loading Gmail credentials from local files...")
                 token_path = Path("token.json")
@@ -168,23 +174,19 @@ class VisionAssistantTools:
                     with open(token_path, "w") as token:
                         token.write(creds.to_json())
             
-            # Check if we have valid credentials
             if not creds or not creds.valid:
                 return {
                     "success": False,
                     "message": "Unable to authenticate with Gmail. Please check credentials."
                 }
             
-            # Build Gmail service
             service = build("gmail", "v1", credentials=creds)
             sender = SENDER_EMAIL
             
-            # Determine which image to attach
             image_path = None
             attached_frame = None
             
             if attach_frame_id:
-                # Handle special keywords
                 if attach_frame_id.lower() in ["current", "latest", "last", "this", "that"]:
                     if self.session_captures:
                         most_recent = max(self.session_captures.keys(), 
@@ -207,12 +209,10 @@ class VisionAssistantTools:
                 else:
                     print(f"Frame '{attach_frame_id}' not found")
             
-            # Verify image file exists
             if image_path and not Path(image_path).exists():
                 print(f"Image file not found: {image_path}")
                 image_path = None
             
-            # Create and send message
             message = create_message_with_attachment(sender, recipient, subject, body, image_path)
             send_result = service.users().messages().send(userId="me", body=message).execute()
             
@@ -263,7 +263,7 @@ class VisionAssistantTools:
                 if frame_id in self.session_captures:
                     existing = self.session_captures[frame_id]
                     time_diff = (datetime.now() - datetime.fromisoformat(existing['timestamp'])).seconds
-                    if time_diff < 5:  # Within 5 seconds
+                    if time_diff < 5:
                         print(f"Skipping duplicate capture: {frame_id} (captured {time_diff}s ago)")
                         return {
                             "success": True,
@@ -290,7 +290,7 @@ class VisionAssistantTools:
                 }
                 
                 captured_frames[frame_id] = capture_info
-                self.session_captures[frame_id] = capture_info  
+                self.session_captures[frame_id] = capture_info
                 
                 save_metadata(captured_frames)
                 
@@ -303,7 +303,7 @@ class VisionAssistantTools:
                 print(f"Total captures this session: {len(self.session_captures)}")
                 
                 size_kb = round(len(image_data) / 1024, 2)
-                del image_data  # Free memory
+                del image_data
                 
                 return {
                     "success": True,
@@ -321,6 +321,29 @@ class VisionAssistantTools:
                     "success": False,
                     "message": f"Failed to save frame: {str(e)}"
                 }
+    
+    async def enable_continuous_monitoring(self, looking_for: Optional[str] = None):
+        """Enable continuous monitoring mode"""
+        self.session_state.continuous_mode = True
+        self.session_state.monitoring_context = looking_for
+        print(f"Continuous monitoring enabled. Looking for: {looking_for or 'general observation'}")
+        
+        return {
+            "success": True,
+            "message": f"Continuous monitoring enabled" + (f" - Looking for: {looking_for}" if looking_for else ""),
+            "context": looking_for
+        }
+    
+    async def disable_continuous_monitoring(self):
+        """Disable continuous monitoring mode"""
+        self.session_state.continuous_mode = False
+        self.session_state.monitoring_context = None
+        print("Continuous monitoring disabled")
+        
+        return {
+            "success": True,
+            "message": "Continuous monitoring disabled"
+        }
     
     async def list_captured_frames(self):
         """List all captured frames"""
@@ -362,11 +385,9 @@ class VisionAssistantTools:
                 filepath.unlink()
             del captured_frames[frame_id]
             
-            # Also remove from session captures
             if frame_id in self.session_captures:
                 del self.session_captures[frame_id]
             
-            # Save updated metadata
             save_metadata(captured_frames)
             
             return {"success": True, "message": f"Frame {frame_id} deleted"}
@@ -395,6 +416,7 @@ class VisionAssistantTools:
         except Exception as e:
             return {"success": False, "message": f"Shutdown error: {str(e)}"}
 
+
 tools = [
     {
         "function_declarations": [
@@ -414,6 +436,27 @@ tools = [
                         }
                     },
                     "required": ["frame_id"]
+                }
+            },
+            {
+                "name": "enable_continuous_monitoring",
+                "description": "Enable continuous real-time monitoring mode. Use when user says 'help me find my keys', 'look for my wallet', 'keep watching', 'monitor this', 'help me navigate'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "looking_for": {
+                            "type": "string",
+                            "description": "What the user is looking for (e.g., 'keys', 'wallet', 'phone', 'exit')"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "disable_continuous_monitoring",
+                "description": "Disable continuous monitoring mode. Use when user says 'stop monitoring', 'found it', 'stop looking', 'cancel search'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
                 }
             },
             {
@@ -439,7 +482,7 @@ tools = [
                             "description": "Optional: frame_id of a previously captured image to attach"
                         }
                     },
-                    "required": ["subject", "body"]  
+                    "required": ["subject", "body"]
                 }
             },
             {
@@ -484,10 +527,13 @@ tools = [
     }
 ]
 
+
 async def execute_tool(tool_instance, tool_name: str, arguments: dict):
     """Execute the requested tool"""
     tools_map = {
         "capture_and_save_frame": tool_instance.capture_and_save_frame,
+        "enable_continuous_monitoring": tool_instance.enable_continuous_monitoring,
+        "disable_continuous_monitoring": tool_instance.disable_continuous_monitoring,
         "send_email": tool_instance.send_email,
         "list_captured_frames": tool_instance.list_captured_frames,
         "get_session_summary": tool_instance.get_session_summary,
@@ -511,28 +557,33 @@ async def root():
         "total_saved_captures": len(captured_frames)
     }
 
+
 @app.get("/api/health")
 async def health():
     return {"status": "healthy"}
+
 
 @app.get("/api/captures")
 async def get_captures():
     """Get list of all captured frames"""
     return {"total": len(captured_frames), "captures": captured_frames}
 
+
 @app.websocket("/ws/vision")
 async def vision_websocket(websocket: WebSocket):
     await websocket.accept()
     print("Client connected")
     
-    latest_frame = {"data": None}
-    session_captures = {} 
+    latest_frame = {"data": None, "timestamp": None}
+    session_captures = {}
+    session_state = SessionState()
     should_shutdown = False
+    websocket_open = True
     
     def get_latest_frame():
         return latest_frame["data"]
     
-    tool_instance = VisionAssistantTools(get_latest_frame, session_captures)
+    tool_instance = VisionAssistantTools(get_latest_frame, session_captures, session_state)
     
     client = genai.Client(
         api_key=GEMINI_API_KEY,
@@ -544,64 +595,190 @@ async def vision_websocket(websocket: WebSocket):
     config = {
         "response_modalities": ["AUDIO"],
         "tools": tools,
-        "system_instruction": """You are a helpful vision assistant for visually impaired users.
+        "system_instruction": """You are AIVA - an AI Visual Assistant for visually impaired users and anyone needing visual help.
 
-                                CRITICAL WORKFLOW FOR "CAPTURE AND EMAIL":
-                                When user says "email this to me" or "email this picture to me" or just "capture this and email this picture to me":
-                                1. FIRST: Call capture_and_save_frame with a unique frame_id (e.g., "capture_001")
-                                2. SECOND: Call send_email with attach_frame_id set to the SAME frame_id from step 1
-                                Always capture the image and send it in email.
-
-                                When user says "email this to me" WITHOUT capturing first:
-                                - Use attach_frame_id="latest" to attach the most recent capture
-
-                                RULES:
-                                1. Call capture_and_save_frame ONLY ONCE per request
-                                2. Do NOT call tools multiple times
-                                3. For "I am done" → call shutdown_session
-                                4. For email:
-                                - "to me" or "my email" → omit recipient or use "me"
-                                - Specific email → use that address
-                                - Fill subject and body intelligently if not provided
-
-                                Your capabilities:
-                                - Describe what you see
-                                - Capture and save views
-                                - Send emails with images
-                                - List/delete captures
-                                - Graceful shutdown
-
-                                Example:
-                                User: "Capture this and email it to me"
-                                Step 1: capture_and_save_frame(frame_id="view_123", description="...")
-                                Step 2: send_email(recipient="me", attach_frame_id="view_123", subject="...", body="...")
-
-                                User: "Email this to me"
-                                Step 1: send_email(recipient="me", attach_frame_id="latest", subject="...", body="...")
-
-                                Be precise with frame_ids!"""
-
+                                CORE BEHAVIOR:
+                                - Speak naturally and conversationally
+                                - Be helpful, proactive, and concise
+                                - Describe what you see clearly and accurately
+                                
+                                CONTINUOUS MONITORING MODE:
+                                This mode is triggered when the user asks "help me find [item]" or similar requests.
+                                You will call enable_continuous_monitoring(looking_for="item") to activate it.
+                                
+                                MONITORING MODE RULES:
+                                1. WHEN YOU SEE THE ITEM:
+                                - Say "I FOUND YOUR [ITEM]! It's [specific location]"
+                                - Example: "I FOUND YOUR KEYS! They're on the desk next to the coffee mug"
+                                - Monitoring will auto-stop after you say "FOUND"
+                                
+                                2. WHEN YOU DON'T SEE THE ITEM:
+                                - Briefly describe what you DO see (5-8 words max)
+                                - Example: "Looking at table with books and papers"
+                                - Stay focused on finding the requested item
+                                
+                                3. ADDITIONAL ASSISTANCE:
+                                - If monitoring is active and user needs help with OTHER tasks:
+                                    • Navigation: "Turn left, stairs ahead, door on right"
+                                    • Unboxing: "Cut tape on top, open flaps carefully"
+                                    • Step-by-step tasks: Break into simple 3-5 word steps
+                                - Prioritize safety-critical information always
+                                
+                                4. WHEN TO STOP MONITORING:
+                                - Automatically after saying "FOUND [ITEM]"
+                                - When user says "stop", "thanks", "found it", or "cancel"
+                                - When you determine the task is complete
+                                - Call disable_continuous_monitoring() to stop
+                                
+                                5. RESPONSE LENGTH:
+                                - Default: 5-8 words during monitoring
+                                - Important info: 10-15 words max
+                                - Only be verbose for safety warnings or complex instructions
+                                
+                                CAPTURE AND EMAIL:
+                                When user says "email this to me" or "capture and send":
+                                1. Call capture_and_save_frame(frame_id="unique_id", description="what's in image")
+                                2. Call send_email(recipient="me", attach_frame_id="same_unique_id", subject="...", body="...")
+                                
+                                SESSION END:
+                                When user says "I am done", "goodbye", or "terminate" → call shutdown_session()
+                                
+                                EXAMPLES:
+                                
+                                Finding keys:
+                                User: "Help me find my keys"
+                                You: [call enable_continuous_monitoring] "Looking for your keys"
+                                Frame 1: "See table with laptop"
+                                Frame 2: "Looking at couch now"
+                                Frame 3: "FOUND YOUR KEYS! On the kitchen counter"
+                                [monitoring auto-stops]
+                                
+                                Navigation help while monitoring:
+                                User: "Help me navigate to the door"
+                                You: "Door is ahead, walk straight 10 feet"
+                                [monitoring continues]
+                                
+                                Unboxing help:
+                                User: "How do I open this package?"
+                                You: "Cut tape on top. Open flaps. Contents inside."
+                                [monitoring continues if active]
+                                
+                                Be the user's helpful, reliable eyes!"""
     }
+
+    async def safe_send_json(data):
+        """Send JSON only if websocket is open"""
+        nonlocal websocket_open
+        if websocket_open:
+            try:
+                await websocket.send_json(data)
+            except RuntimeError as e:
+                if "websocket.close" in str(e) or "already completed" in str(e):
+                    websocket_open = False
+                    print("WebSocket already closed, stopping sends")
+                else:
+                    raise
 
     try:
         async with client.aio.live.connect(model=model, config=config) as session:
             print("Vision Assistant session started")
             print(f"Captures directory: {CAPTURES_DIR.absolute()}")
             
-            await websocket.send_json({
+            await safe_send_json({
                 "type": "status",
                 "message": "Vision Assistant ready!"
             })
             
+            async def continuous_monitor():
+                """Actively send monitoring prompts WITH current frame every 2 seconds"""
+                print("🔍 Monitoring task started")
+                
+                while websocket_open:
+                    try:
+                        if session_state.continuous_mode and latest_frame["data"]:
+                            time_since_last = (datetime.now() - session_state.last_notification_time).seconds
+                            
+                            if time_since_last >= 0.5:  # Every .5 seconds
+                                item = session_state.monitoring_context or "object"
+                                
+                                # CRITICAL: Send ONLY the new frame (not accumulated context)
+                                print(f"🔍 Sending NEW frame for monitoring check: {item}")
+                                
+                                # Send the image as inline data in the prompt itself
+                                await session.send_client_content(
+                                    turns={
+                                        "parts": [
+                                            {
+                                                "inline_data": {
+                                                    "mime_type": "image/jpeg",
+                                                    "data": latest_frame["data"]
+                                                }
+                                            },
+                                            {
+                                                "text": f"Look at THIS image I just sent. Right now. Do you see a {item} in THIS specific image? Answer: If YES → 'FOUND {item.upper()}! Location: [where]' and then stop monitoring immediately. If NO → Not Yet"
+                                            }
+                                        ]
+                                    }
+                                )
+                                
+                                print(f"Monitoring prompt sent with fresh frame for: {item}")
+                                session_state.last_notification_time = datetime.now()
+                        
+                        await asyncio.sleep(2)
+                        
+                    except asyncio.CancelledError:
+                        print("Continuous monitoring task cancelled")
+                        break
+                    except Exception as e:
+                        print(f"Continuous monitoring error: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        await asyncio.sleep(2)
+
             async def receive_from_gemini():
-                nonlocal should_shutdown
+                nonlocal should_shutdown, websocket_open
+                
+                current_text = ""
                 
                 try:
-                    while True:
+                    while websocket_open:
                         turn = session.receive()
                         async for response in turn:
                             try:
-                                # Handle tool calls
+                                if not websocket_open:
+                                    break
+                                
+                                if hasattr(response, 'text') and response.text:
+                                    current_text += response.text.lower()
+                                    print(f"Text: {response.text}")
+                                    
+                                    if session_state.continuous_mode:
+                                        if "found" in current_text or "FOUND" in current_text:
+                                            print(f"FOUND DETECTED - FORCE DISABLING")
+                                            
+                                            old_item = session_state.monitoring_context
+                                            
+                                            result = await tool_instance.disable_continuous_monitoring()
+                                            print(f"🛑 Disable tool result: {result}")
+                                            
+                                            await safe_send_json({
+                                                "type": "tool_executed",
+                                                "tool": "disable_continuous_monitoring",
+                                                "result": result
+                                            })
+                                            
+                                            await safe_send_json({
+                                                "type": "monitoring_disabled"
+                                            })
+                                            
+                                            await safe_send_json({
+                                                "type": "item_found",
+                                                "item": old_item
+                                            })
+                                            
+                                            print(f"MONITORING FORCE-STOPPED: {old_item}")
+                                            current_text = ""
+                                
                                 if hasattr(response, 'tool_call') and response.tool_call:
                                     function_responses = []
                                     
@@ -609,17 +786,12 @@ async def vision_websocket(websocket: WebSocket):
                                         tool_name = func_call.name
                                         arguments = dict(func_call.args)
                                         
-                                        print(f"Tool called: {tool_name}")
-                                        print(f"Arguments: {arguments}")
-                                        
-                                        # Execute the tool
+                                        print(f"Tool: {tool_name} Args: {arguments}")
                                         result = await execute_tool(tool_instance, tool_name, arguments)
                                         
-                                        # Check if shutdown was requested
                                         if tool_name == "shutdown_session" and result.get("success"):
                                             should_shutdown = True
                                         
-                                        # Create FunctionResponse
                                         function_response = types.FunctionResponse(
                                             id=func_call.id,
                                             name=func_call.name,
@@ -627,49 +799,57 @@ async def vision_websocket(websocket: WebSocket):
                                         )
                                         function_responses.append(function_response)
                                         
-                                        # Notify frontend
-                                        await websocket.send_json({
+                                        await safe_send_json({
                                             "type": "tool_executed",
                                             "tool": tool_name,
                                             "result": result
                                         })
+                                        
+                                        if tool_name == "enable_continuous_monitoring":
+                                            await safe_send_json({
+                                                "type": "monitoring_enabled",
+                                                "context": arguments.get("looking_for")
+                                            })
+                                            print(f"Monitoring enabled: {arguments.get('looking_for')}")
+                                        elif tool_name == "disable_continuous_monitoring":
+                                            await safe_send_json({
+                                                "type": "monitoring_disabled"
+                                            })
+                                            print("Monitoring disabled by tool")
                                     
-                                    # Send tool responses back
-                                    await session.send_tool_response(
-                                        function_responses=function_responses
-                                    )
+                                    await session.send_tool_response(function_responses=function_responses)
                                 
-                                # Handle audio responses
                                 if hasattr(response, 'data') and response.data:
-                                    await websocket.send_json({
+                                    await safe_send_json({
                                         "type": "audio",
                                         "data": response.data.hex()
                                     })
                                 
-                                # If shutdown requested, break after response
+                                if hasattr(response, 'server_content') and response.server_content:
+                                    if hasattr(response.server_content, 'turn_complete') and response.server_content.turn_complete:
+                                        current_text = ""
+                                
                                 if should_shutdown:
-                                    print("Shutdown requested, ending session...")
-                                    await websocket.send_json({
-                                        "type": "shutdown",
-                                        "message": "Session ending gracefully"
-                                    })
-                                    await asyncio.sleep(2)  # Give time for final audio
-                                    raise asyncio.CancelledError("Graceful shutdown")
+                                    websocket_open = False
+                                    raise asyncio.CancelledError("Shutdown")
                                 
                             except Exception as e:
-                                print(f"Response processing error: {e}")
-                                import traceback
-                                traceback.print_exc()
+                                if "websocket.close" in str(e):
+                                    websocket_open = False
+                                    break
+                                print(f"Response error: {e}")
                                 
                 except asyncio.CancelledError:
-                    print("Receive task cancelled (graceful shutdown)")
+                    websocket_open = False
                     raise
                 except Exception as e:
                     print(f"Receive error: {e}")
-            
+                    websocket_open = False
+
             async def receive_from_client():
+                nonlocal websocket_open
                 try:
-                    while True:
+                    while websocket_open:
                         data = await websocket.receive()
                         
                         if "text" in data:
@@ -680,8 +860,8 @@ async def vision_websocket(websocket: WebSocket):
                                     turns={"parts": [{"text": message["content"]}]}
                                 )
                             elif message.get("type") == "video":
-                                # Store latest frame (replaces previous)
                                 latest_frame["data"] = message["data"]
+                                latest_frame["timestamp"] = datetime.now()
                                 
                                 await session.send_realtime_input(
                                     media={
@@ -700,27 +880,34 @@ async def vision_websocket(websocket: WebSocket):
                             
                 except WebSocketDisconnect:
                     print("Client disconnected")
+                    websocket_open = False
                     return
                 except RuntimeError as e:
                     if "disconnect message" in str(e):
                         print("Client disconnected (already closed)")
+                        websocket_open = False
                         return
                     raise
                 except Exception as e:
                     print(f"Client receive error: {e}")
+                    websocket_open = False
                     return
 
             try:
                 await asyncio.gather(
                     receive_from_gemini(),
                     receive_from_client(),
+                    continuous_monitor(),  
                     return_exceptions=False
                 )
             except (WebSocketDisconnect, asyncio.CancelledError, RuntimeError) as e:
                 print(f"Session ended: {type(e).__name__}")
+                websocket_open = False
             except Exception as e:
                 print(f"Unexpected error: {e}")
+                websocket_open = False
     finally:
+        websocket_open = False
         save_metadata(captured_frames)
         print(f"Session ended. Captures saved: {len(session_captures)}")
         print(f"Session summary: {list(session_captures.keys())}")
@@ -748,6 +935,7 @@ if STATIC_DIR.exists() and (STATIC_DIR / "index.html").exists():
             return FileResponse(file_path)
         
         return FileResponse(STATIC_DIR / "index.html")
+
 
 if __name__ == "__main__":
     import uvicorn

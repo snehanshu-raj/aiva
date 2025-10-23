@@ -7,6 +7,7 @@ function App() {
   const [cameraMode, setCameraMode] = useState('user');
   const [status, setStatus] = useState('Ready to start');
   const [error, setError] = useState(null);
+  const [isMonitoring, setIsMonitoring] = useState(false); // NEW: Track monitoring state
   
   const wsRef = useRef(null);
   const videoRef = useRef(null);
@@ -80,6 +81,17 @@ function App() {
           setStatus(data.message);
         } else if (data.type === 'error') {
           setError(data.message);
+        } 
+        // NEW: Handle monitoring state changes
+        else if (data.type === 'monitoring_enabled') {
+          setIsMonitoring(true);
+          const context = data.context ? ` - Looking for: ${data.context}` : '';
+          setStatus(`🔍 Monitoring mode active${context}`);
+          console.log('Continuous monitoring enabled');
+        } else if (data.type === 'monitoring_disabled') {
+          setIsMonitoring(false);
+          setStatus('AIVA is active - Listening and watching');
+          console.log('Continuous monitoring disabled');
         }
       };
       
@@ -92,6 +104,7 @@ function App() {
         console.log('WebSocket closed');
         setStatus('Disconnected');
         setIsActive(false);
+        setIsMonitoring(false); // NEW: Reset monitoring state
         audioQueueRef.current = [];
         isPlayingRef.current = false;
       };
@@ -142,6 +155,7 @@ function App() {
     isPlayingRef.current = false;
     
     setIsActive(false);
+    setIsMonitoring(false); // NEW: Reset monitoring state
     setStatus('Stopped');
   };
 
@@ -312,9 +326,9 @@ function App() {
           </div>
         )}
 
-        <div className="status-bar">
+        <div className={`status-bar ${isMonitoring ? 'monitoring' : ''}`}>
           <span className={`status-indicator ${isActive ? 'active' : ''}`}>
-            {isActive ? '🟢' : '⚫'}
+            {isMonitoring ? '🔍' : (isActive ? '🟢' : '⚫')}
           </span>
           <span className="status-text">{status}</span>
         </div>
@@ -340,7 +354,7 @@ function App() {
             onClick={switchCamera}
             aria-label={`Switch to ${cameraMode === 'user' ? 'rear' : 'front'} camera`}
           >
-            {cameraMode === 'user' ? 'Front Camera Active' : 'Rear Camera Active'}
+            {cameraMode === 'user' ? 'Front Camera Mode' : 'Rear Camera Mode'}
           </button>
 
           {!isActive ? (
