@@ -77,15 +77,50 @@ class SessionState:
         self.last_description = ""
         self.monitoring_context = None  
         self.last_notification_time = datetime.now()
+        self.latest_location = None
+        self.location_event = asyncio.Event()
 
 
 class VisionAssistantTools:
     """Tools that can be called via voice commands"""
-    def __init__(self, get_latest_frame_callback, session_captures, session_state):
+    def __init__(self, get_latest_frame_callback, session_captures, session_state, send_to_client_callback):
         self.get_latest_frame = get_latest_frame_callback
         self.session_captures = session_captures
         self.session_state = session_state
+        self.send_to_client = send_to_client_callback
         self.processing_lock = asyncio.Lock()
+        
+    async def get_location(self):
+        """Get the user's current location from the frontend"""
+        print("Requesting location from frontend...")
+        self.session_state.location_event.clear()
+        
+        # Request location from frontend
+        await self.send_to_client({
+            "type": "request_location"
+        })
+        
+        # Wait for response (timeout after 10 seconds)
+        try:
+            await asyncio.wait_for(self.session_state.location_event.wait(), timeout=10.0)
+            
+            if self.session_state.latest_location:
+                loc = self.session_state.latest_location
+                return {
+                    "success": True,
+                    "location": loc,
+                    "message": f"User is at Lat: {loc.get('latitude')}, Lng: {loc.get('longitude')}" + (f" (Accuracy: {loc.get('accuracy')}m)" if loc.get('accuracy') else "")
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Frontend returned no location data"
+                }
+        except asyncio.TimeoutError:
+            return {
+                "success": False,
+                "message": "Timed out waiting for location from device"
+            }
         
     async def send_email(self, recipient: Optional[str] = None, subject: str = "Vision Assistant Capture", body: str = "Here's the image you requested.", attach_frame_id: Optional[str] = None):
         """Send email with optional image attachment using Gmail API"""
@@ -213,6 +248,21 @@ class VisionAssistantTools:
                 print(f"Image file not found: {image_path}")
                 image_path = None
             
+            # Append location link if available
+            if attached_frame:
+                location_data = None
+                if attached_frame in self.session_captures:
+                    location_data = self.session_captures[attached_frame].get("location")
+                elif attached_frame in captured_frames:
+                    location_data = captured_frames[attached_frame].get("location")
+                
+                if location_data:
+                    lat = location_data.get("latitude")
+                    lng = location_data.get("longitude")
+                    if lat and lng:
+                        maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+                        body += f"\n\n📍 View capture location on Google Maps:\n{maps_url}"
+            
             message = create_message_with_attachment(sender, recipient, subject, body, image_path)
             send_result = service.users().messages().send(userId="me", body=message).execute()
             
@@ -250,6 +300,18 @@ class VisionAssistantTools:
     async def capture_and_save_frame(self, frame_id: str, description: Optional[str] = None):
         """Capture and save the current camera view locally"""
         
+        # Try to get a fresh location if we don't have one or it's old
+        # We won't wait too long to avoid delaying the capture significantly
+        if not self.session_state.latest_location:
+            print("No location data, requesting before capture...")
+            self.session_state.location_event.clear()
+            await self.send_to_client({"type": "request_location"})
+            try:
+                # Wait up to 5 seconds for a location fix
+                await asyncio.wait_for(self.session_state.location_event.wait(), timeout=10.0)
+            except asyncio.TimeoutError:
+                print("Location request timed out during capture")
+
         async with self.processing_lock:
             try:
                 frame_data = self.get_latest_frame()
@@ -281,12 +343,14 @@ class VisionAssistantTools:
                     f.write(image_data)
                 
                 capture_info = {
+                    "frame_id": frame_id,
                     "filename": filename,
                     "filepath": str(filepath),
                     "timestamp": timestamp.isoformat(),
                     "description": description or "No description provided",
                     "status": "captured",
-                    "size_bytes": len(image_data)
+                    "size_bytes": len(image_data),
+                    "location": self.session_state.latest_location # Attach location if available
                 }
                 
                 captured_frames[frame_id] = capture_info
@@ -300,7 +364,8 @@ class VisionAssistantTools:
                     del captured_frames[oldest_key]
                 
                 print(f"Frame saved: {filepath} ({len(image_data)} bytes)")
-                print(f"Total captures this session: {len(self.session_captures)}")
+                if self.session_state.latest_location:
+                    print(f"Location attached: {self.session_state.latest_location}")
                 
                 size_kb = round(len(image_data) / 1024, 2)
                 del image_data
@@ -312,7 +377,8 @@ class VisionAssistantTools:
                     "filepath": str(filepath),
                     "timestamp": timestamp.isoformat(),
                     "size_kb": size_kb,
-                    "message": f"Frame captured successfully as {filename}"
+                    "location": self.session_state.latest_location,
+                    "message": f"Frame captured successfully as {filename}" + (" with location" if self.session_state.latest_location else "")
                 }
                 
             except Exception as e:
@@ -421,6 +487,14 @@ tools = [
     {
         "function_declarations": [
             {
+                "name": "get_location",
+                "description": "Get the user's current location. Use when user asks 'where am I', 'email my location', or 'send my location'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
                 "name": "capture_and_save_frame",
                 "description": "Capture the current camera view and save it locally. Use ONLY when user explicitly says 'capture', 'save', 'take a picture'. DO NOT call multiple times for one request.",
                 "parameters": {
@@ -428,11 +502,11 @@ tools = [
                     "properties": {
                         "frame_id": {
                             "type": "string",
-                            "description": "Unique identifier (e.g., 'front_door', 'living_room')"
+                            "description": "Unique identifier (e.g., 'front_door', 'living_room') or whatever the user says about the file name."
                         },
                         "description": {
                             "type": "string",
-                            "description": "Brief description of what's captured"
+                            "description": "Brief description of what's captured or whatever the user says about the image as notes."
                         }
                     },
                     "required": ["frame_id"]
@@ -517,7 +591,7 @@ tools = [
             },
             {
                 "name": "shutdown_session",
-                "description": "Gracefully end the session and save all data. Use when user says 'I am done', 'thank you goodbye', 'terminate', 'shut down', 'end session'",
+                "description": "Gracefully end the session and save all data. Use when user says 'I am done', 'thank you goodbye', 'terminate', 'shut down', 'end session', 'exit', 'stop', 'close camera', 'stop assistant'.",
                 "parameters": {
                     "type": "object",
                     "properties": {}
@@ -531,6 +605,7 @@ tools = [
 async def execute_tool(tool_instance, tool_name: str, arguments: dict):
     """Execute the requested tool"""
     tools_map = {
+        "get_location": tool_instance.get_location,
         "capture_and_save_frame": tool_instance.capture_and_save_frame,
         "enable_continuous_monitoring": tool_instance.enable_continuous_monitoring,
         "disable_continuous_monitoring": tool_instance.disable_continuous_monitoring,
@@ -569,6 +644,31 @@ async def get_captures():
     return {"total": len(captured_frames), "captures": captured_frames}
 
 
+@app.delete("/api/captures/{frame_id}")
+async def delete_capture(frame_id: str):
+    """Delete a captured frame and its metadata"""
+    if frame_id not in captured_frames:
+        raise HTTPException(status_code=404, detail="Capture not found")
+    
+    capture = captured_frames[frame_id]
+    filepath = Path(capture["filepath"])
+    
+    # Delete file
+    if filepath.exists():
+        try:
+            filepath.unlink()
+        except Exception as e:
+            print(f"Error deleting file {filepath}: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to delete file: {e}")
+            
+    # Remove metadata
+    del captured_frames[frame_id]
+    save_metadata(captured_frames)
+    
+    print(f"Deleted capture: {frame_id}")
+    return {"success": True, "message": "Capture deleted"}
+
+
 @app.websocket("/ws/vision")
 async def vision_websocket(websocket: WebSocket):
     await websocket.accept()
@@ -583,19 +683,33 @@ async def vision_websocket(websocket: WebSocket):
     def get_latest_frame():
         return latest_frame["data"]
     
-    tool_instance = VisionAssistantTools(get_latest_frame, session_captures, session_state)
+    async def safe_send_json(data):
+        """Send JSON only if websocket is open"""
+        nonlocal websocket_open
+        if websocket_open:
+            try:
+                await websocket.send_json(data)
+            except RuntimeError as e:
+                if "websocket.close" in str(e) or "already completed" in str(e):
+                    websocket_open = False
+                    print("WebSocket already closed, stopping sends")
+                else:
+                    raise
+
+    
+    tool_instance = VisionAssistantTools(get_latest_frame, session_captures, session_state, safe_send_json)
     
     client = genai.Client(
         api_key=GEMINI_API_KEY,
         http_options={"api_version": "v1beta"}
     )
     
-    model = "models/gemini-2.0-flash-live-001"
+    model = "models/gemini-2.5-flash-native-audio-preview-12-202"
     
     config = {
         "response_modalities": ["AUDIO"],
         "tools": tools,
-        "system_instruction": """You are AIVA - an AI Visual Assistant for visually impaired users and anyone needing visual help.
+        "system_instruction": """You are Saforia - an AI Visual Assistant for anyone needing visual assistance.
 
                                 CORE BEHAVIOR:
                                 - Speak naturally and conversationally
@@ -641,7 +755,7 @@ async def vision_websocket(websocket: WebSocket):
                                 2. Call send_email(recipient="me", attach_frame_id="same_unique_id", subject="...", body="...")
                                 
                                 SESSION END:
-                                When user says "I am done", "goodbye", or "terminate" → call shutdown_session()
+                                When user says "Exit", "I am done", "goodbye", or "terminate" → call shutdown_session()
                                 
                                 EXAMPLES:
                                 
@@ -666,18 +780,6 @@ async def vision_websocket(websocket: WebSocket):
                                 Be the user's helpful, reliable eyes!"""
     }
 
-    async def safe_send_json(data):
-        """Send JSON only if websocket is open"""
-        nonlocal websocket_open
-        if websocket_open:
-            try:
-                await websocket.send_json(data)
-            except RuntimeError as e:
-                if "websocket.close" in str(e) or "already completed" in str(e):
-                    websocket_open = False
-                    print("WebSocket already closed, stopping sends")
-                else:
-                    raise
 
     try:
         async with client.aio.live.connect(model=model, config=config) as session:
@@ -698,7 +800,7 @@ async def vision_websocket(websocket: WebSocket):
                         if session_state.continuous_mode and latest_frame["data"]:
                             time_since_last = (datetime.now() - session_state.last_notification_time).seconds
                             
-                            if time_since_last >= 0.5:  # Every .5 seconds
+                            if time_since_last >= 1:  # Every .5 seconds
                                 item = session_state.monitoring_context or "object"
                                 
                                 # CRITICAL: Send ONLY the new frame (not accumulated context)
@@ -798,13 +900,15 @@ async def vision_websocket(websocket: WebSocket):
                                             response={"result": result}
                                         )
                                         function_responses.append(function_response)
-                                        
+
+                                        # Notify frontend of tool execution
                                         await safe_send_json({
                                             "type": "tool_executed",
                                             "tool": tool_name,
                                             "result": result
                                         })
                                         
+                                        # Handle specific monitoring events
                                         if tool_name == "enable_continuous_monitoring":
                                             await safe_send_json({
                                                 "type": "monitoring_enabled",
@@ -817,6 +921,7 @@ async def vision_websocket(websocket: WebSocket):
                                             })
                                             print("Monitoring disabled by tool")
                                     
+                                    # Send responses back to Gemini
                                     await session.send_tool_response(function_responses=function_responses)
                                 
                                 if hasattr(response, 'data') and response.data:
@@ -838,12 +943,15 @@ async def vision_websocket(websocket: WebSocket):
                                     websocket_open = False
                                     break
                                 print(f"Response error: {e}")
+                                await safe_send_json({"type": "error", "message": f"AI Error: {str(e)}"})
                                 
                 except asyncio.CancelledError:
                     websocket_open = False
                     raise
                 except Exception as e:
                     print(f"Receive error: {e}")
+                    websocket_open = False
+                finally:
                     websocket_open = False
 
             async def receive_from_client():
@@ -869,6 +977,12 @@ async def vision_websocket(websocket: WebSocket):
                                         "data": message["data"]
                                     }
                                 )
+                            
+                            elif message.get("type") == "location_response" or message.get("type") == "location_update":
+                                if "location" in message:
+                                    session_state.latest_location = message["location"]
+                                    print(f"Location update received: {message['location']}")
+                                    session_state.location_event.set()
                                 
                         elif "bytes" in data:
                             await session.send_realtime_input(
@@ -914,6 +1028,10 @@ async def vision_websocket(websocket: WebSocket):
         latest_frame["data"] = None
 
 STATIC_DIR = Path("/app/static")
+
+# Mount captures directory to serve images
+if CAPTURES_DIR.exists():
+    app.mount("/captures", StaticFiles(directory=str(CAPTURES_DIR)), name="captures")
 
 if STATIC_DIR.exists() and (STATIC_DIR / "index.html").exists():
     static_files = STATIC_DIR / "static"
